@@ -15,8 +15,7 @@ namespace ConsoleWolApplication
         public void SetClientToBrodcastMode()
         {
             if (this.Active)
-                this.Client.SetSocketOption(SocketOptionLevel.Socket,
-                    SocketOptionName.Broadcast, 0);
+                this.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 0);
         }
     }
 }
