@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -10,10 +11,19 @@ namespace ConsoleWolApplication
     {
         private const int Port = 15000;
 
-        public async Task BypassIpAddressesAndSendMagicPackageAsync(byte[] magicPacket)
+        public async Task SendAsync(byte[] magicPacket)
         {
+            var networkInterfaces = GetNetworkInterfaces();
+
+            foreach (var networkInterface in networkInterfaces)
+                await SendMagicPackageAsync(networkInterface, magicPacket);
+        }
+
+        private IList<IPAddress> GetNetworkInterfaces()
+        {
+            var result = new List<IPAddress>();
             var upAndNotLoopbackNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback
-                                                                                                           && n.OperationalStatus == OperationalStatus.Up);
+                                                                                                          && n.OperationalStatus == OperationalStatus.Up);
 
             foreach (var networkInterface in upAndNotLoopbackNetworkInterfaces)
             {
@@ -22,8 +32,10 @@ namespace ConsoleWolApplication
                                                                                                              && !iPInterfaceProperties.GetIPv4Properties().IsAutomaticPrivateAddressingActive);
                 if (unicastIpAddressInformation == null) continue;
 
-                await SendMagicPackageAsync(unicastIpAddressInformation.Address, magicPacket);
+                result.Add(unicastIpAddressInformation.Address);
             }
+
+            return result;
         }
 
         private async Task SendMagicPackageAsync(IPAddress localIpAddress, byte[] magicPacket)

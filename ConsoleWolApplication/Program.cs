@@ -10,6 +10,9 @@ namespace ConsoleWolApplication
             var nasMac = "FF-FF-FF-FF-FF-FF";
             var magicPacketSender = new MagicPacketSender(nasMac);
             await magicPacketSender.SendAsync();
+
+            Console.WriteLine("Done");
+            Console.ReadKey();
         }
     }
 }

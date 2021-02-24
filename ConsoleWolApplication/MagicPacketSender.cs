@@ -19,7 +19,7 @@ namespace ConsoleWolApplication
         public async Task SendAsync()
         {
             var magicPacket = GetMagicPackage();
-            await  _wakeOnLanClient.BypassIpAddressesAndSendMagicPackageAsync(magicPacket.ToArray());
+            await  _wakeOnLanClient.SendAsync(magicPacket.ToArray());
         }
 
         private IList<byte> GetMagicPackage()
