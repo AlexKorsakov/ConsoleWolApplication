@@ -7,7 +7,7 @@ namespace ConsoleWolApplication
         static void Main(string[] args)
         {
             var nasMac = "FF-FF-FF-FF-FF-FF";
-            var magicPacketSender = new MagicPacketSender(nasMac.Replace("-", ""));
+            var magicPacketSender = new MagicPacketSender(nasMac);
             magicPacketSender.Send();
         }
     }

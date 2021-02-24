@@ -35,38 +35,31 @@ namespace ConsoleWolApplication
             var returnedValue = client.Send(_magicPacket.ToArray(), _magicPacket.Count);
         }
 
-        private byte[] GetTimingChain()
+        private IList<byte> GetTimingChain()
         {
             const int timingChainSize = 6;
-            var result = new byte[timingChainSize];
+            var result = new List<byte>();
 
             for (int i = 0; i < timingChainSize; i++)
-                result[i] = 0xFF;
+                result.Add(0xFF);
 
             return result;
         }
 
         private IList<byte> GetMagicPacketBody(string macAddress)
         {
-            var counter = 0;
-            var bytes = new byte[96];
+            const int macRepeatCount = 16;
             var result = new List<byte>();
 
-            //now repeate MAC 16 times
-            for (int y = 0; y < 16; y++)
+            for (int i = 0; i < macRepeatCount; i++)
             {
-                int i = 0;
-                for (int z = 0; z < 6; z++)
+                foreach (var macByte in macAddress.Split('-'))
                 {
-                    //var oneByteFromMac = byte.Parse(_macAddress.Substring(i, 2), NumberStyles.HexNumber);
-                    //result.Add(oneByteFromMac);
-                    bytes[counter++] = byte.Parse(_macAddress.Substring(i, 2), NumberStyles.HexNumber);
-                    i += 2;
+                    result.Add(byte.Parse(macByte, NumberStyles.HexNumber));
                 }
-
             }
 
-            return bytes;
+            return result;
         }
     }
 }
