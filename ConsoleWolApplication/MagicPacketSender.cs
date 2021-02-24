@@ -1,40 +1,40 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
-using System.Net;
-using System.Text;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ConsoleWolApplication
 {
     public class MagicPacketSender
     {
         private readonly string _macAddress;
-        private readonly IPAddress _broadcastIpAddress = new IPAddress(0xffffffff);
-        private const int Port = 12287;
-        private List<byte> _magicPacket;
+        private readonly WakeOnLanClient _wakeOnLanClient;
 
         public MagicPacketSender(string macAddress)
         {
             _macAddress = macAddress;
-            _magicPacket = new List<byte>();
+            _wakeOnLanClient = new WakeOnLanClient();
         }
 
-        public void Send()
+        public async Task SendAsync()
         {
-            var client = new WakeOnLanClient();
-            client.Connect(_broadcastIpAddress, Port);                    
-            client.SetClientToBrodcastMode();
+            var magicPacket = GetMagicPackage();
+            await  _wakeOnLanClient.BypassIpAddressesAndSendMagicPackageAsync(magicPacket.ToArray());
+        }
+
+        private IList<byte> GetMagicPackage()
+        {
+            var magicPacket = new List<byte>();
 
             var timingChain = GetTimingChain();
             var magicPacketBody = GetMagicPacketBody(_macAddress);
 
-            _magicPacket.AddRange(timingChain);
-            _magicPacket.AddRange(magicPacketBody);
+            magicPacket.AddRange(timingChain);
+            magicPacket.AddRange(magicPacketBody);
 
-            var returnedValue = client.Send(_magicPacket.ToArray(), _magicPacket.Count);
+            return magicPacket;
         }
-
+        
         private IList<byte> GetTimingChain()
         {
             const int timingChainSize = 6;
@@ -53,10 +53,9 @@ namespace ConsoleWolApplication
 
             for (int i = 0; i < macRepeatCount; i++)
             {
-                foreach (var macByte in macAddress.Split('-'))
-                {
-                    result.Add(byte.Parse(macByte, NumberStyles.HexNumber));
-                }
+                var macInBytes = macAddress.Split('-')
+                                           .Select(x => byte.Parse(x, NumberStyles.HexNumber));
+                result.AddRange(macInBytes);
             }
 
             return result;

@@ -1,21 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace ConsoleWolApplication
 {
-    public class WakeOnLanClient : UdpClient
+    public class WakeOnLanClient
     {
-        public WakeOnLanClient() : base()
-        {
+        private const int Port = 15000;
 
+        public async Task BypassIpAddressesAndSendMagicPackageAsync(byte[] magicPacket)
+        {
+            var upAndNotLoopbackNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.NetworkInterfaceType != NetworkInterfaceType.Loopback
+                                                                                                           && n.OperationalStatus == OperationalStatus.Up);
+
+            foreach (var networkInterface in upAndNotLoopbackNetworkInterfaces)
+            {
+                var iPInterfaceProperties = networkInterface.GetIPProperties();
+                var unicastIpAddressInformation = iPInterfaceProperties.UnicastAddresses.FirstOrDefault(u => u.Address.AddressFamily == AddressFamily.InterNetwork
+                                                                                                             && !iPInterfaceProperties.GetIPv4Properties().IsAutomaticPrivateAddressingActive);
+                if (unicastIpAddressInformation == null) continue;
+
+                await SendMagicPackageAsync(unicastIpAddressInformation.Address, magicPacket);
+            }
         }
 
-        public void SetClientToBrodcastMode()
+        private async Task SendMagicPackageAsync(IPAddress localIpAddress, byte[] magicPacket)
         {
-            if (this.Active)
-                this.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 0);
+            using var client = new UdpClient(new IPEndPoint(localIpAddress, Port));
+            await client.SendAsync(magicPacket, magicPacket.Length, IPAddress.Broadcast.ToString(), Port);
         }
     }
 }
